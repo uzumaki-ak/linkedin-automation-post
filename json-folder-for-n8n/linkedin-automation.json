@@ -1,0 +1,791 @@
+{
+  "name": "linkedin-automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "n8n linkedin",
+          "cachedResultUrl": "gogle sheet link here"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "google sheet link here"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -192
+      ],
+      "id": "618aa99f-400c-4865-bc75-e146028f6c66",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "google sheet trigger id here",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6b4452c0-2252-413e-b7ce-34d60aef1f2d",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        -192
+      ],
+      "id": "044f1d75-75dc-48d2-8055-494f940eb7d3",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -208
+      ],
+      "id": "b4c93e70-b7d2-40f0-9ac7-243443d1cbac",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "=google docs link here"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -208
+      ],
+      "id": "788b82f4-5017-4931-a553-58036451456f",
+      "name": "writing style linkdn",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "google docs id here",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Linkedin post writer first, carefully read the following writing style reference from the sheet:\n {{ $json.content }} \nNow create a Linkedin post based on the following title:\n{{ $('Limit').item.json['Linkedin Post Title'] }}\nResponse only with a JSON object in exactly this format:\n{\n\"title\": \"{{ $('Limit').item.json['Linkedin Post Title'] }}\",\n\"post\": \"<your linkedin post here>\"\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        -208
+      ],
+      "id": "14232d6e-970a-486a-ab85-39f2ca2ae485",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        368,
+        0
+      ],
+      "id": "32229eae-e117-4032-ad75-5e6a4bb5ca61",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gemini api id here",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\"type\":\"string\"},\n    \"post\" :{\"type\":\"string\"}\n  },\n  \"required\":[\"title\",\"post\"],\n  \"additionalProperties\":false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        0
+      ],
+      "id": "7b5faa70-c782-47a7-b326-aaaaf9edabb2",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfor (const item of items) {\n  if (\n    item.json &&\n    item.json.output &&\n    typeof item.json.output.post === \"string\"\n  ) {\n    // Replace escaped \"\\n\" with actual newline characters\n    item.json.output.post = item.json.output.post.replace(/\\\\n/g, String.fromCharCode(10));\n  }\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        240
+      ],
+      "id": "a6128a4c-8606-4ef1-be99-02a1bc6d3e11",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-exp-image-generation",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-exp-image-generation"
+        },
+        "prompt": "=Createa high quality visually engaging image for a social media post based on the following text:\n\n {{ $('Limit').item.json['Linkedin Post Title'] }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        240
+      ],
+      "id": "d58b2033-75b9-4c38-a397-de5b199d5261",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gemini api id here",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={   \"fileName\": \"linkedin_{{ $now.format('YYYYMMDD_HHmmss') }}.{{ $binary.data.fileExtension || 'png' }}\" }",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1LN2v06NM-3s_BagzJ6RbF7WS-yxxJjLz",
+          "mode": "list",
+          "cachedResultName": "n8n-linkedin",
+          "cachedResultUrl": "google drive folder link here"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -16,
+        240
+      ],
+      "id": "e79eb45e-048e-4ee1-a48b-f7868bc8b184",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "google drive id here",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone",
+            "allowFileDiscovery": true
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        192,
+        224
+      ],
+      "id": "cba22b19-5ca9-4e59-9eaa-589ee8685223",
+      "name": "Share file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "google drive id here",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "google sheet id here",
+          "mode": "list",
+          "cachedResultName": "n8n linkedin",
+          "cachedResultUrl": "google sheet link here"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "google sheet link here"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $('Limit').item.json.ID }}",
+            "Status": "done",
+            "imageUrl": "={{ $('Upload file').item.json.webViewLink }}",
+            "post content": "={{ $('Code').item.json.output.post }}",
+            "Linkedin Post Title": "={{ $('Google Sheets Trigger').item.json['Linkedin Post Title'] }}"
+          },
+          "matchingColumns": [
+            "Linkedin Post Title"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin Post Title",
+              "displayName": "Linkedin Post Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "imageUrl",
+              "displayName": "imageUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "post content",
+              "displayName": "post content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        224
+      ],
+      "id": "0b52e2f6-c3be-4c04-8a96-26edbc0ecc6b",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "sendAndWait",
+        "guildId": {
+          "__rl": true,
+          "value": "discord server id here",
+          "mode": "id"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1412377309951819818",
+          "mode": "list",
+          "cachedResultName": "linkedin-post-approval",
+          "cachedResultUrl": "discord channel link here"
+        },
+        "message": "=Hi Uzumaki ,\n\nHere's the LinkedIn post for : \n {{ $('Limit').item.json['Linkedin Post Title'] }}\n\n{{ $('Code').item.json.output.post }}\n",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        608,
+        224
+      ],
+      "id": "0ae6bb33-01d4-434d-92e2-d6bd359788f6",
+      "name": "Create a channel",
+      "webhookId": "webhook id here",
+      "credentials": {
+        "discordOAuth2Api": {
+          "id": "discord account id here",
+          "name": "Discord account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "569150db-0ad3-4e15-84e8-58f655022fcf",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        224
+      ],
+      "id": "cc7b177c-9401-410b-ab46-e7d266808961",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Update row in sheet').item.json.imageUrl }}",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        528
+      ],
+      "id": "be3d52d2-03e4-482f-91e2-98f6c58b9cad",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "google drive id here",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "Lvl6LiUawY",
+        "text": "={{ $('Update row in sheet').item.json['post content'] }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        528
+      ],
+      "id": "81dc94a5-4d14-4efb-b2d2-a94deef86bb2",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "linkedin account id here",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "google sheet id here",
+          "cachedResultName": "n8n linkedin",
+          "cachedResultUrl": "google sheet link here"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "google sheet link here"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $('Limit').item.json.ID }}",
+            "Status": "posted"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Linkedin Post Title",
+              "displayName": "Linkedin Post Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "imageUrl",
+              "displayName": "imageUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "post content",
+              "displayName": "post content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        32,
+        528
+      ],
+      "id": "9429e075-8461-4993-8e92-2ebb1fa68944",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "writing style linkdn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "writing style linkdn": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Share file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share file": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Create a channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a channel": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a post": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ed200a4a-febe-4faf-97a5-d8efcfbd272d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0bd2e2ac206e0664030a916e052da4d50c2855ff6d9948164615df13e6b5098e"
+  },
+  "id": "nigKRJaSmKuKu3My",
+  "tags": []
+}
