@@ -1,5 +1,5 @@
 # 🧩 Automated Content Generation Workflow (n8n)
-
+# demo video : https://youtu.be/IexrkruCKoc
 This workflow automates **content creation, formatting, and multi-platform publishing** using AI, Google Workspace, and social APIs — all orchestrated in **n8n**.
 
 ---
